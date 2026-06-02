@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oms X&O </title>
+  <style> 
+        /*Reset & Base*/
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: purple;
+      font-family: 'Georgia', serif;
+      color: #fff;
+      padding: 20px;
+    }
+
+    hr {
+      width: 280px;
+      border: none;
+      border-top: 1px solid #333;
+      margin-bottom: 20px;
+    }
+
+    /*Status message*/
+    #status-message {
+      font-size: 1.1rem;
+      color: #9a9a9a;
+      margin-bottom: 24px;
+      min-height: 28px;
+      letter-spacing: 1px;
+      transition: color 0.3s;
+    }
+
+    #status-message.winner {
+      color: #e8a94a;
+      font-weight: bold;
+    }
+
+    #status-message.draw {
+      color: #d97b7b;
+    }
+
+    /*Game Board*/
+    #game-board {
+      display: grid;
+      /* 3 equal columns with a gap acting as the grid lines */
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 6px;
+      background: #333;   /* gap colour becomes the grid line colour */
+      border: 6px solid #333;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+
+    /*Each cell*/
+    .game-cell {
+      background: #1a1a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      user-select: none;      /* stop text selection on fast clicks */
+    }
+
+    .game-cell:hover:not(.taken) {
+      background: #22223a;
+    }
+
+    /* Mark the cell as taken so hover no longer triggers */
+    .game-cell.taken {
+      cursor: default;
+    }
+
+    /* Colour X and O differently */
+    .game-cell.x {
+      color: #e8a94a;   /* warm gold for X */
+    }
+
+    .game-cell.o {
+      color: #7bb8d4;   /* cool blue for O */
+    }
+
+    /* Highlight winning cells */
+    .game-cell.winning-cell {
+      background: #2a2a10;
+      animation: pulse 0.6s ease infinite alternate;
+    }
+
+       .menu ul li a{
+           text-decoration: none;
+           color: #e8a94a;
+           text-transform: uppercase;
+           font-weight: 600px;
+           padding: 10px 20px;
+           transition: 0.3s ease;
+           font-size: 50px;
+           font-family: 'Georgia';
+           letter-spacing: 1px;
+       }
+
+       .menu ul li a:hover {
+           color: blue;
+       }
+
+    @keyframes pulse {
+      from { background: #2a2a10; }
+      to   { background: #3a3a18; }
+    }
+
+    /*Restart Button*/
+    #game-restart-button {
+      padding: 12px 36px;
+      font-size: 1rem;
+      font-family: 'Georgia', serif;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: transparent;
+      color: #e8a94a;
+      border: 1px solid #e8a94a;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    #game-restart-button:hover {
+      background: #e8a94a;
+      color: #0f0f1a;
+    }
+
+    #game-restart-button:active {
+      transform: scale(0.97);
+    }
+
+    .comment-box {
+     display: flex;
+     background: black;
+     }
+
+    /*Score board*/
+    .scoreboard {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 24px;
+    }
+
+    .score-box {
+      text-align: center;
+    }
+
+    .score-label {
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .score-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+	
+	.main_button{
+	background: blue;
+	color: white;
+        cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    
+	}
+
+    .score-box.x .score-value { color: #e8a94a; }
+    .score-box.o .score-value { color: #7bb8d4; }
+    .score-box.draws .score-value { color: #666; }
+ 
+  </style>
+<body
+   <div class="menu">
+            <ul>
+                  <li><a href="#" class="nav-link active" data-target="about">OMS X&O</a></li>
+           </ul>
+   </div>
+
+  <hr>
+
+  <!Scoreboard>
+  <div class="scoreboard" aria-label="Score tracker">
+    <div class="score-box x">
+      <div class="score-label">Player X</div>
+      <div class="score-value" id="score-x">0</div>
+    </div>
+    <div class="score-box draws">
+      <div class="score-label">Draws</div>
+      <div class="score-value" id="score-draws">0</div>
+    </div>
+    <div class="score-box o">
+      <div class="score-label">Player O</div>
+      <div class="score-value" id="score-o">0</div>
+    </div>
+  </div>
+
+  <!Status line (whose turn / who won)>
+  <div id="status-message" aria-live="polite">Player X's turn</div>
+
+  <!The 3×3 board>
+  <div id="game-board" role="grid" aria-label="Tic-Tac-Toe board">
+    <div data-cell-index="0" class="game-cell" role="gridcell" aria-label="Cell 1"></div>
+    <div data-cell-index="1" class="game-cell" role="gridcell" aria-label="Cell 2"></div>
+    <div data-cell-index="2" class="game-cell" role="gridcell" aria-label="Cell 3"></div>
+    <div data-cell-index="3" class="game-cell" role="gridcell" aria-label="Cell 4"></div>
+    <div data-cell-index="4" class="game-cell" role="gridcell" aria-label="Cell 5"></div>
+    <div data-cell-index="5" class="game-cell" role="gridcell" aria-label="Cell 6"></div>
+    <div data-cell-index="6" class="game-cell" role="gridcell" aria-label="Cell 7"></div>
+    <div data-cell-index="7" class="game-cell" role="gridcell" aria-label="Cell 8"></div>
+    <div data-cell-index="8" class="game-cell" role="gridcell" aria-label="Cell 9"></div>
+  </div>
+
+  <button id="game-restart-button" aria-label="Restart the game">Restart Game</button>
+
+  <div class="comment-box" style="padding: 10px;">
+  <form method="post" id="comment-form">
+    <textarea class="comment-content hidden" name="content" placeholder="Comment here"></textarea>
+    <div class="comment-error">
+    </div>
+    <div class="user-info" id="comment-user-info">
+      <div class="" id="anonymous-form">
+        <input maxlength="20" placeholder="Name (required)" required type="text" name="anonymous_name">
+        <input maxlength="50" placeholder="Email (optional)" type="email" name="anonymous_email">
+      </div>
+      <button class="main_button" type="submit" style="padding: 0 30px;">Send</button>
+      <span id="user-name" style="padding-left: 10px;"></span>
+    </div>
+  </form>
+</div>
+
+  <script>
+  
+    // GAME STATE
+    // We track the board as a 9-element array. Each slot is either
+    // null (empty), 'X', or 'O'.
+
+    let board        = Array(9).fill(null);  // the 9 cells
+    let currentPlayer = 'O';                 // who is playing now
+    let gameActive   = true;                 // false once game ends
+
+    // Running score that survives restarts
+    const scores = { X: 0, O: 0, draws: 0 };
+
+    // All 8 possible winning combinations (by cell index)
+    const WIN_COMBOS = [
+      [0, 1, 2], // top row
+      [3, 4, 5], // middle row
+      [6, 7, 8], // bottom row
+      [0, 3, 6], // left column
+      [1, 4, 7], // middle column
+      [2, 5, 8], // right column
+      [0, 4, 8], // diagonal top-left → bottom-right
+      [2, 4, 6], // diagonal top-right → bottom-left
+    ];
+
+    // DOM references
+    const cells         = document.querySelectorAll('.game-cell');
+    const statusMsg     = document.getElementById('status-message');
+    const restartBtn    = document.getElementById('game-restart-button');
+    const scoreXEl      = document.getElementById('score-x');
+    const scoreOEl      = document.getElementById('score-o');
+    const scoreDrawsEl  = document.getElementById('score-draws');
+
+    //
+    // HANDLE CELL CLICK
+    //
+    function handleCellClick(e) {
+      const cell  = e.target;
+      const index = parseInt(cell.dataset.cellIndex, 10);
+
+      // Ignore clicks if: game is over, or cell is already filled
+      if (!gameActive || board[index] !== null) return;
+
+      // Place the current player's mark
+      placeMark(cell, index);
+
+      // Check if the game just ended
+      const winningCombo = getWinningCombo();
+
+      if (winningCombo) {
+        // Someone won!
+        endGame(false, winningCombo);
+      } else if (board.every(cell => cell !== null)) {
+        // All cells filled and no winner → draw
+        endGame(true);
+      } else {
+        // Game continues — switch player
+        swapPlayer();
+        updateStatus();
+      }
+    }
+
+    // 
+    // PLACE A MARK on the board array and in the DOM
+    // 
+    function placeMark(cell, index) {
+      board[index] = currentPlayer;          // update the data model
+      cell.textContent = currentPlayer;      // update the visual
+      cell.classList.add('taken', currentPlayer.toLowerCase()); // style it
+    }
+
+    // 
+    // CHECK FOR A WINNER
+    // Returns the winning [a, b, c] combo, or null if none yet.
+    // 
+    function getWinningCombo() {
+      for (const combo of WIN_COMBOS) {
+        const [a, b, c] = combo;
+        // A combo wins when all three cells hold the same non-null mark
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          return combo;
+        }
+      }
+      return null;
+    }
+
+    // 
+    // END THE GAME (win or draw)
+    // 
+    function endGame(isDraw, winningCombo = []) {
+      gameActive = false;
+
+      if (isDraw) {
+        statusMsg.textContent = "It's a Draw! 🤝";
+        statusMsg.className = 'draw';
+        scores.draws++;
+        scoreDrawsEl.textContent = scores.draws;
+      } else {
+        statusMsg.textContent = `Player ${currentPlayer} Wins! 🎉`;
+        statusMsg.className = 'winner';
+        scores[currentPlayer]++;
+        scoreXEl.textContent = scores.X;
+        scoreOEl.textContent = scores.O;
+
+        // Highlight the three winning cells
+        winningCombo.forEach(i => cells[i].classList.add('winning-cell'));
+      }
+    }
+
+    // 
+    // SWAP PLAYER  X → O or O → X
+    // 
+    function swapPlayer() {
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    }
+
+    // 
+    // UPDATE STATUS LINE
+    // 
+    function updateStatus() {
+      statusMsg.textContent = `Player ${currentPlayer}'s turn`;
+      statusMsg.className = '';
+    }
+
+    // 
+    // RESTART — reset board and DOM, keep scores
+    // 
+    function restartGame() {
+      board         = Array(9).fill(null);
+      currentPlayer = 'X';
+      gameActive    = true;
+
+      // Clear every cell's content and classes
+      cells.forEach(cell => {
+        cell.textContent = '';
+        cell.className   = 'game-cell';  // back to base class only
+      });
+
+      updateStatus();
+    }
+
+    // 
+    // EVENT LISTENERS
+    // 
+
+    // Attach a click listener to every cell
+    cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+
+    // Restart button
+    restartBtn.addEventListener('click', restartGame);
+
+        // Feature Injection: Ensure music plays across views since it sits outside the dynamic router container
+        window.addEventListener('click', () => {
+            const bgMusic = document.getElementById('bg-music');
+            if (bgMusic && bgMusic.paused) {
+                bgMusic.play().catch(err => console.log("Autoplay blocked until interaction: ", err));
+            }
+        }, { once: true });
+
+</script>
+
+  <audio id="bg-music" loop autoplay style="display:none;"> 
+    <source src="C:\Users\olami\OneDrive\Desktop\OMS GAMES\oms games.html\Alec_Benjamin_-_Devil_Doesnt_Bargain_CeeNaija.com_.mp3" type="audio/mpeg">
+  </audio>
+</body>
+</html>
