@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMS X&O</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f0f2f5; }
+        .grid { display: grid; grid-template-columns: repeat(3, 100px); gap: 5px; justify-content: center; margin: 20px auto; }
+        .cell { width: 100px; height: 100px; background: white; border: 2px solid #333; font-size: 2rem; font-weight: bold; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .cell.taken { cursor: not-allowed; }
+        #status { font-size: 1.5rem; margin-top: 10px; font-weight: bold; color: #007bff; }
+        button { padding: 10px 20px; font-size: 1rem; margin-top: 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <h1>Human (X) vs Computer (O)</h1>
+    <div id="status">Your Turn!</div>
+    
+    <div class="grid" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+
+    <button onclick="resetGame()">Restart Game</button>
+
+    <script>
+        const boardElement = document.getElementById('board');
+        const statusElement = document.getElementById('status');
+        let board = ["", "", "", "", "", "", "", "", ""];
+        let isGameActive = true;
+
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
+            [0, 4, 8], [2, 4, 6]             // Diagonals
+        ];
+
+        // 1. Handle Human Player Choice
+        boardElement.addEventListener('click', (e) => {
+            const cell = e.target;
+            const index = cell.getAttribute('data-index');
+
+            if (!cell.classList.contains('cell') || board[index] !== "" || !isGameActive) return;
+
+            makeMove(index, "X");
+            
+            if (checkWin("X")) {
+                endGame("You Win! 🎉");
+            } else if (board.every(cell => cell !== "")) {
+                endGame("It's a Draw! 👔");
+            } else {
+                isGameActive = false; // Temporarily lock board for AI turn
+                statusElement.innerText = "Computer is thinking...";
+                setTimeout(computerTurn, 600); // 600ms delay for realism
+            }
+        });
+
+        // 2. Core Move Function
+        function makeMove(index, player) {
+            board[index] = player;
+            const cell = document.querySelector(`[data-index='${index}']`);
+            cell.innerText = player;
+            cell.classList.add('taken');
+        }
+
+        // 3. Computer AI Opponent Logic Loop
+        function computerTurn() {
+            if (!isGameActive && board.every(cell => cell !== "")) return;
+
+            // Simple AI: Find all empty available spaces
+            let emptyCells = [];
+            board.forEach((val, idx) => { if (val === "") emptyCells.push(idx); });
+
+            // Choose a random available cell
+            const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            
+            makeMove(randomIndex, "O");
+
+            if (checkWin("O")) {
+                endGame("Computer Wins! 🤖");
+            } else if (board.every(cell => cell !== "")) {
+                endGame("It's a Draw! 👔");
+            } else {
+                isGameActive = true; // Unlock board for player
+                statusElement.innerText = "Your Turn!";
+            }
+        }
+
+        // 4. Evaluate Game State
+        function checkWin(player) {
+            return winConditions.some(condition => {
+                return condition.every(index => board[index] === player);
+            });
+        }
+
+        function endGame(message) {
+            statusElement.innerText = message;
+            isGameActive = false;
+        }
+
+        // 5. Reset functionality
+        function resetGame() {
+            board = ["", "", "", "", "", "", "", "", ""];
+            isGameActive = true;
+            statusElement.innerText = "Your Turn!";
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.innerText = "";
+                cell.classList.remove('taken');
+            });
+        }
+    </script>
+</body>
+</html>
